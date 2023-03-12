@@ -3,7 +3,14 @@ from models.user import UserOut, UserIn, User
 from lib.db import get_db
 from pydantic import BaseModel
 import bcrypt
+import jwt
+import os
+import datetime
+from datetime import timedelta
 
+ACCESS_TOKEN_EXPIRE_DAYS = 30
+
+jwt_secret = os.environ.get("JWT_SECRET")
 db = get_db()
 api = APIRouter(
     prefix="/api/v1",
@@ -15,10 +22,21 @@ class UserLogin(BaseModel):
     password: str
 
 
-@api.post("/signup", response_model=UserOut)
+def create_token(user):
+    payload = {
+        "sub": user.username,
+        "exp": datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
+    }
+    token = jwt.encode(payload, jwt_secret, algorithm="HS256")
+    return {"access_token": token, "token_type": "bearer"}
+
+
+@api.post("/signup")
 async def signup(user: UserIn):
     try:
-        user_password = bcrypt.hashpw(user.password.encode("utf-8"), bcrypt.gensalt())
+        user_password = bcrypt.hashpw(
+            user.password.encode("utf-8"),
+            bcrypt.gensalt())
         new_user = User(
             username=user.username,
             password=user_password.decode("utf-8"),
@@ -26,8 +44,13 @@ async def signup(user: UserIn):
         )
         db.add(new_user)
         db.commit()
-        return UserOut(username=user.username, email=user.email, is_active=True)
+        user = UserOut(
+            username=user.username, email=user.email,
+            is_active=True
+        )
+        return create_token(user)
     except Exception as error:
+        print(error)
         raise HTTPException(status_code=400, detail=str(error))
 
 
@@ -40,6 +63,8 @@ async def login(user: UserLogin):
         user.password.encode("utf-8"), login_user.password.encode("utf-8")
     )
     if shoud_login:
-        return UserOut(
-            username=login_user.username, email=login_user.email, is_active=True
+        user_out = UserOut(
+            username=login_user.username, email=login_user.email,
+            is_active=True
         )
+        return create_token(user_out)
