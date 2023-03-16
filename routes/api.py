@@ -6,8 +6,8 @@ import bcrypt
 import jwt
 import os
 import datetime
-from datetime import timedelta
-
+from datetime import timedelta,datetime
+import routes.user as userRouter
 ACCESS_TOKEN_EXPIRE_DAYS = 30
 
 jwt_secret = os.environ.get("JWT_SECRET")
@@ -68,3 +68,5 @@ async def login(user: UserLogin):
             is_active=True
         )
         return create_token(user_out)
+
+api.include_router(userRouter.user)

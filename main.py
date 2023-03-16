@@ -3,7 +3,8 @@ import os
 from fastapi import FastAPI
 from dotenv import load_dotenv
 from routes import api
-from lib.db import engine, db, metadata
+from lib.db import engine, db
+from lib.firebase import init_firebase
 from fastapi.middleware.cors import CORSMiddleware
 
 environment = os.getenv("ENVIRONMENT", "development")
@@ -27,6 +28,7 @@ app.include_router(api.api)
 def startup():
     print("Starting up")
     db.metadata.create_all(bind=engine, checkfirst=True)
+    init_firebase()
 
 
 @app.get("/")

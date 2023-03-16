@@ -10,6 +10,7 @@ class User(db):
     email = Column(String, unique=True, index=True)
     password = Column(String())
     user_active = Column(Boolean, default=True)
+    profile_picture = Column(String)
 
 
 class UserIn(BaseModel):
@@ -22,3 +23,4 @@ class UserOut(BaseModel):
     username: str
     email: str
     is_active: bool
+    profile_picture: str
