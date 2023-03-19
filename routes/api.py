@@ -6,8 +6,10 @@ import bcrypt
 import jwt
 import os
 import datetime
-from datetime import timedelta,datetime
+from datetime import timedelta, datetime
 import routes.user as userRouter
+import routes.post as postRouter
+
 ACCESS_TOKEN_EXPIRE_DAYS = 30
 
 jwt_secret = os.environ.get("JWT_SECRET")
@@ -24,8 +26,8 @@ class UserLogin(BaseModel):
 
 def create_token(user):
     payload = {
-        "sub": user.username,
-        "exp": datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
+        "sub": user.user_id,
+        "exp": datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS),
     }
     token = jwt.encode(payload, jwt_secret, algorithm="HS256")
     return {"access_token": token, "token_type": "bearer"}
@@ -34,9 +36,7 @@ def create_token(user):
 @api.post("/signup")
 async def signup(user: UserIn):
     try:
-        user_password = bcrypt.hashpw(
-            user.password.encode("utf-8"),
-            bcrypt.gensalt())
+        user_password = bcrypt.hashpw(user.password.encode("utf-8"), bcrypt.gensalt())
         new_user = User(
             username=user.username,
             password=user_password.decode("utf-8"),
@@ -45,8 +45,10 @@ async def signup(user: UserIn):
         db.add(new_user)
         db.commit()
         user = UserOut(
-            username=user.username, email=user.email,
-            is_active=True
+            username=user.username,
+            email=user.email,
+            is_active=True,
+            user_id=new_user.user_id,
         )
         return create_token(user)
     except Exception as error:
@@ -64,9 +66,10 @@ async def login(user: UserLogin):
     )
     if shoud_login:
         user_out = UserOut(
-            username=login_user.username, email=login_user.email,
-            is_active=True
+            username=login_user.username, email=login_user.email, is_active=True
         )
         return create_token(user_out)
 
+
 api.include_router(userRouter.user)
+api.include_router(postRouter.post)

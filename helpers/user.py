@@ -5,6 +5,13 @@ from models.user import User
 db = get_db()
 
 
+def get_user_by_id(user_id: str):
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if user is None:
+        raise Exception("User not found")
+    return user
+
+
 def get_user(username: str):
     user = db.query(User).filter(User.username == username).first()
     if user is None:

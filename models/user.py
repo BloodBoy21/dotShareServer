@@ -1,16 +1,24 @@
 from lib.db import db
 from sqlalchemy import Column, Integer, String, Boolean
 from pydantic import BaseModel
+import uuid
+
+
+def generate_uuid():
+    return str(uuid.uuid4())[:8]
 
 
 class User(db):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        String(8), unique=True, index=True, default=generate_uuid, nullable=False
+    )
     username = Column(String(20), unique=True, index=True)
     email = Column(String, unique=True, index=True)
     password = Column(String())
     user_active = Column(Boolean, default=True)
-    profile_picture = Column(String)
+    profile_picture = Column(String, default="")
 
 
 class UserIn(BaseModel):
@@ -23,4 +31,5 @@ class UserOut(BaseModel):
     username: str
     email: str
     is_active: bool
-    profile_picture: str
+    profile_picture: str = ""
+    user_id: str
