@@ -30,6 +30,6 @@ class UserIn(BaseModel):
 class UserOut(BaseModel):
     username: str
     email: str
-    is_active: bool
-    profile_picture: str = ""
+    is_active: bool = True
+    profile_picture: str = None
     user_id: str

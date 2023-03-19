@@ -24,7 +24,14 @@ class UserLogin(BaseModel):
     password: str
 
 
-def create_token(user):
+class UserToken(BaseModel):
+    access_token: str
+    token_type: str
+
+
+def create_token(user: UserOut = None):
+    if user is None:
+        raise HTTPException(status_code=400, detail="User not found")
     payload = {
         "sub": user.user_id,
         "exp": datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS),
@@ -56,7 +63,7 @@ async def signup(user: UserIn):
         raise HTTPException(status_code=400, detail=str(error))
 
 
-@api.post("/login", response_model=UserOut)
+@api.post("/login", response_model=UserToken)
 async def login(user: UserLogin):
     login_user = db.query(User).filter(User.username == user.username).first()
     if login_user is None:
@@ -64,11 +71,16 @@ async def login(user: UserLogin):
     shoud_login = bcrypt.checkpw(
         user.password.encode("utf-8"), login_user.password.encode("utf-8")
     )
-    if shoud_login:
-        user_out = UserOut(
-            username=login_user.username, email=login_user.email, is_active=True
-        )
-        return create_token(user_out)
+    if not shoud_login:
+        raise HTTPException(status_code=401, detail="Incorrect password or username")
+    user_out = UserOut(
+        username=login_user.username,
+        email=login_user.email,
+        is_active=True,
+        user_id=login_user.user_id,
+        profile_picture=login_user.profile_picture,
+    )
+    return create_token(user_out)
 
 
 api.include_router(userRouter.user)
