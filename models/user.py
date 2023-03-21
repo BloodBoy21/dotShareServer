@@ -33,3 +33,13 @@ class UserOut(BaseModel):
     is_active: bool = True
     profile_picture: str = None
     user_id: str
+
+
+def user_helper(user) -> UserOut:
+    return UserOut(
+        username=user.username,
+        email=user.email,
+        is_active=user.user_active,
+        profile_picture=user.profile_picture,
+        user_id=user.user_id,
+    )
