@@ -24,9 +24,8 @@ class UserLogin(BaseModel):
     password: str
 
 
-class UserToken(BaseModel):
-    access_token: str
-    token_type: str
+class UserToken(UserOut):
+    token: str
 
 
 def create_token(user: UserOut = None):
@@ -37,7 +36,7 @@ def create_token(user: UserOut = None):
         "exp": datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS),
     }
     token = jwt.encode(payload, jwt_secret, algorithm="HS256")
-    return {"access_token": token, "token_type": "bearer"}
+    return token
 
 
 @api.post("/signup")
@@ -80,7 +79,9 @@ async def login(user: UserLogin):
         user_id=login_user.user_id,
         profile_picture=login_user.profile_picture,
     )
-    return create_token(user_out)
+    token = create_token(user_out)
+    user_out = UserToken(**user_out.dict(), token=token)
+    return user_out
 
 
 api.include_router(userRouter.user)
