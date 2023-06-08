@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from models.user import UserOut, UserIn, User
 from lib.db import get_db
-from lib.OAuth import OAuth, OAuth_strategies
 from pydantic import BaseModel
 import bcrypt
 import jwt
@@ -10,7 +9,6 @@ import datetime
 from datetime import timedelta, datetime
 import routes.user as userRouter
 import routes.post as postRouter
-import requests as req
 
 ACCESS_TOKEN_EXPIRE_DAYS = 30
 
@@ -90,12 +88,12 @@ async def login(user: UserLogin):
     return user_out
 
 
-@api.post("/login/github", response_model=UserToken)
-async def login_github(body: OAuthCode):
-    strategy = OAuth.strategy(OAuth_strategies["github"])
-    user = strategy(body.code).get_user()
-    token = create_token(user)
-    return UserToken(**user.dict(), token=token)
+# @api.post("/login/github", response_model=UserToken)
+# async def login_github(body: OAuthCode):
+#     strategy = OAuth.strategy(OAuth_strategies["github"])
+#     user = strategy(body.code).get_user()
+#     token = create_token(user)
+#     return UserToken(**user.dict(), token=token)
 
 
 api.include_router(userRouter.user)
